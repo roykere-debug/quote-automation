@@ -87,7 +87,6 @@ class AirtableClient:
         fields = record.get("fields", {})
 
         name_field = os.getenv("FIELD_LEAD_NAME", "שם הליד")
-        summary_field = os.getenv("FIELD_SUMMARY", "סיכום חכם")
         service_field = os.getenv("FIELD_SERVICE", "שירות מבוקש")
         email_field = os.getenv("FIELD_EMAIL", "אימייל")
         next_step_field = os.getenv("FIELD_NEXT_STEP", "שלב הבא")
@@ -102,7 +101,7 @@ class AirtableClient:
         return Lead(
             record_id=record.get("id"),
             name=fields.get(name_field, ""),
-            summary=fields.get(summary_field, ""),
+            summary="",  # Not required anymore
             email=fields.get(email_field, ""),
             next_step=fields.get(next_step_field, ""),
             services=services,
