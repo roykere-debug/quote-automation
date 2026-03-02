@@ -39,6 +39,18 @@ def get_google_credentials():
     token_file = os.getenv("GOOGLE_TOKEN_FILE", "token.json")
     creds_file = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
 
+    # Check if token exists as environment variable (for Railway)
+    token_json_base64 = os.getenv("TOKEN_JSON_BASE64")
+    if token_json_base64:
+        logger.debug("Loading token from TOKEN_JSON_BASE64 environment variable")
+        try:
+            token_json_str = base64.b64decode(token_json_base64).decode('utf-8')
+            with open(token_file, "w") as f:
+                f.write(token_json_str)
+            logger.debug(f"Token written to {token_file}")
+        except Exception as e:
+            logger.error(f"Failed to decode TOKEN_JSON_BASE64: {e}")
+
     # Check if token file exists
     if os.path.exists(token_file):
         creds = Credentials.from_authorized_user_file(token_file, SCOPES)
