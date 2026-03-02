@@ -88,7 +88,7 @@ class AirtableClient:
 
         name_field = os.getenv("FIELD_LEAD_NAME", "שם הליד")
         service_field = os.getenv("FIELD_SERVICE", "שירות מבוקש")
-        email_field = os.getenv("FIELD_EMAIL", "אימייל")
+        email_field = os.getenv("FIELD_EMAIL", "מייל")
         next_step_field = os.getenv("FIELD_NEXT_STEP", "שלב הבא")
 
         # Service field can be a list (Airtable multi-select) or a single string
