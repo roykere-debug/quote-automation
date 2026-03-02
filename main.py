@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import logging
 import schedule
 from pathlib import Path
@@ -49,12 +50,27 @@ def get_google_credentials():
             creds.refresh(Request())
         else:
             logger.info("Starting OAuth2 flow for Google authorization...")
-            if not os.path.exists(creds_file):
-                logger.error(f"Credentials file not found: {creds_file}")
-                logger.error("Download credentials.json from Google Cloud Console and place it in this directory")
-                raise FileNotFoundError(f"{creds_file} not found")
 
-            flow = InstalledAppFlow.from_client_secrets_file(creds_file, SCOPES)
+            # Try to load from environment variable first (for Railway)
+            creds_json_str = os.getenv("GOOGLE_CREDENTIALS_JSON")
+
+            if creds_json_str:
+                # Railway: Load from environment variable
+                logger.debug("Loading Google credentials from environment variable")
+                creds_json = json.loads(creds_json_str)
+                # Write temporarily to create flow
+                with open("/tmp/creds_temp.json", "w") as f:
+                    json.dump(creds_json, f)
+                flow = InstalledAppFlow.from_client_secrets_file("/tmp/creds_temp.json", SCOPES)
+            elif os.path.exists(creds_file):
+                # Local: Load from file
+                logger.debug(f"Loading Google credentials from file: {creds_file}")
+                flow = InstalledAppFlow.from_client_secrets_file(creds_file, SCOPES)
+            else:
+                logger.error(f"Credentials file not found: {creds_file}")
+                logger.error("Set GOOGLE_CREDENTIALS_JSON environment variable or place credentials.json in this directory")
+                raise FileNotFoundError(f"{creds_file} not found and GOOGLE_CREDENTIALS_JSON not set")
+
             creds = flow.run_local_server(port=0)
 
         # Save the credentials for next time
