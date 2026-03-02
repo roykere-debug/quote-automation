@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import base64
 import logging
 import schedule
 from pathlib import Path
@@ -52,24 +53,29 @@ def get_google_credentials():
             logger.info("Starting OAuth2 flow for Google authorization...")
 
             # Try to load from environment variable first (for Railway)
-            creds_json_str = os.getenv("GOOGLE_CREDENTIALS_JSON")
+            creds_json_str = os.getenv("GOOGLE_CREDENTIALS_JSON_BASE64")
 
             if creds_json_str:
-                # Railway: Load from environment variable
-                logger.debug("Loading Google credentials from environment variable")
-                creds_json = json.loads(creds_json_str)
-                # Write temporarily to create flow
-                with open("/tmp/creds_temp.json", "w") as f:
-                    json.dump(creds_json, f)
-                flow = InstalledAppFlow.from_client_secrets_file("/tmp/creds_temp.json", SCOPES)
+                # Railway: Load from base64-encoded environment variable
+                logger.debug("Loading Google credentials from base64 environment variable")
+                try:
+                    creds_json_bytes = base64.b64decode(creds_json_str)
+                    creds_json = json.loads(creds_json_bytes.decode('utf-8'))
+                    # Write temporarily to create flow
+                    with open("/tmp/creds_temp.json", "w") as f:
+                        json.dump(creds_json, f)
+                    flow = InstalledAppFlow.from_client_secrets_file("/tmp/creds_temp.json", SCOPES)
+                except Exception as e:
+                    logger.error(f"Failed to decode base64 credentials: {e}")
+                    raise
             elif os.path.exists(creds_file):
                 # Local: Load from file
                 logger.debug(f"Loading Google credentials from file: {creds_file}")
                 flow = InstalledAppFlow.from_client_secrets_file(creds_file, SCOPES)
             else:
                 logger.error(f"Credentials file not found: {creds_file}")
-                logger.error("Set GOOGLE_CREDENTIALS_JSON environment variable or place credentials.json in this directory")
-                raise FileNotFoundError(f"{creds_file} not found and GOOGLE_CREDENTIALS_JSON not set")
+                logger.error("Set GOOGLE_CREDENTIALS_JSON_BASE64 environment variable or place credentials.json in this directory")
+                raise FileNotFoundError(f"{creds_file} not found and GOOGLE_CREDENTIALS_JSON_BASE64 not set")
 
             creds = flow.run_local_server(port=0)
 
